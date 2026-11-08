@@ -1,0 +1,12 @@
+pydantic
+fastapi
+typing
+sqlmodel
+requests
+pytest
+uvicorn
+pydantic[email]
+load_dotenv
+sqlalchemy[asyncio]
+asyncpg
+httpx2

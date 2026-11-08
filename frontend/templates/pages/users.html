@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody id="user-table-body">
+        {% for user in users %}
+            {% include 'partials/users/user_row.html' %}
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

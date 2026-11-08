@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title | default('Mi Sitio Web') }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}">
+    <script src="/static/js/htmx.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <header class="site-header">
+        {% block navbar %}
+        <nav class="navbar">
+            <a href="/logo.png" class="brand-logo">Mi Sitio</a>
+            <ul class="nav-links">
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/about">Acerca</a></li>
+                <li><a href="/contact">Contacto</a></li>
+                <li><a href="/auth/login">Iniciar Sesion</a></li>
+                <li><a href="/auth/signup">Registrate</a></li>
+            </ul>
+        </nav>
+        {% endblock %}
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        {% block footer %} {% endblock %}
+        <p>&copy; 2026 Sitio Web. All Rigth Reserved.</p>
+
+    </footer>
+
+</body>
+
+</html>

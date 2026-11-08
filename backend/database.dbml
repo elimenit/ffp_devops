@@ -1,0 +1,80 @@
+// Roles de los usuarios
+Table roles {
+  id int [primary key, increment]
+  name varchar [unique]
+}
+
+// Usuarios
+Table users {
+  id int [primary key, increment]
+  email varchar [unique]
+  name varchar
+  role_id varchar [not null, ref: > roles.id]
+  created_at timestamp
+}
+
+// Cupones de descuentos
+Table coupons {
+  id int [primary key, increment]
+  code varchar
+  start_time timestamp
+  end_time timestamp
+}
+
+// Productos
+Table products {
+  id int [primary key, increment]
+  name varchar
+  price decimal
+  provider_id int [not null, ref: > providers.id]
+  created_at timestamp
+  coupon_id int [not null, ref: > coupons.id] 
+}
+
+// Proveedores de productos
+Table providers {
+  id int [primary key, increment]
+  name varchar [unique] 
+}
+
+// Estado de los pedidos de los usuarios
+Table status_order {
+  id int [primary key, increment]
+  name varchar [unique]
+}
+
+// Ordenes de los clientes
+Table orders {
+  id int [primary key, increment]
+  address varchar 
+  status_id int [not null, ref: > status_order.id]
+  product_id int [not null, ref: > products.id]
+  stock int // Cantidad de productos
+  mount int // Cantidad que tiene que pagar el usuario
+  created_at timestamp // Fecha generada de la orden
+}
+
+// Pagos
+Table payments {
+  id int [primary key, increment]
+  user_id int [not null, ref: > users.id]
+  order_id int [not null, ref: > orders.id]
+  mount int // Monto realizado desde la API provider de pagos
+  created_at timestamp
+}
+
+// Reseña de los productos
+Table reviews {
+  id int [primary key, increment]
+  user_id int [not null, ref: > users.id]
+  product_id int [not null, ref: > products.id]
+  rating int [not null]
+  comment text
+  created_at timestamp
+
+  indexes {
+    (user_id, product_id) [unique]
+  }
+}
+
+// Mas adelante carrito de compras (sesiones de un usuario o anonima).

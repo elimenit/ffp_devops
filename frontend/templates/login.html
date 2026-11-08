@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesion{% endblock %}
+
+{% block content %}
+<h1>Prueba de FastApi con HTMX</h1>
+
+<form hx-post="/saludar" hx-target="#resultado" hx-swap="innerHTML">
+    <label for="nombre">Escribe tu Nombre</label>
+    <input type="text" name="nombre" id="nombre">
+    <button type="submit">Enviar</button>
+</form>
+
+<div id="resultado" style="margin-top: 20pxd ;"></div>
+
+{% endblock %}
