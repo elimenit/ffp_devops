@@ -32,9 +32,24 @@ class __UserBase(SQLModel):
 
 # BASE DE DATOS
 class UserRole(str, Enum):
+    """Roles que puede tener cualquier Usuario"""
+
     CLIENT: str = "CLIENT"
     PROVIDER: str = "PROVIDER"
+    PARTNER: str = "PARTNER"
+    SPONSOR: str = "SPONSOR"
     ADMIN: str = "ADMIN"
+
+    @property
+    def product_limit(self) -> int:
+        limits = {
+            self.CLIENT: 10,
+            self.PROVIDER: 100,
+            self.PARTNER: 500,
+            self.SPONSOR: 1000,
+            self.ADMIN: 2000,
+        }
+        return limits[self]
 
 
 class Users(__UserBase, table=True):
@@ -76,11 +91,11 @@ class UserPatch(__UserBase):
 
 
 class UserFilters(__UserBase):
-    """Filtros sin table=True."""
+    """Filtros de Usuarios."""
 
     email: Optional[str] = Field(default=None, ge=5, le=255)
     username: Optional[str] = Field(default=None, min_length=11)
     role_id: Optional[int] = Field(default=None)
     is_active: Optional[bool] = Field(default=None)
-    offset: int = Field(default=0, ge=0, le=50)
+    offset: int = Field(default=0, ge=0)
     limit: int = Field(default=20, le=50)

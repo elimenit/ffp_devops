@@ -1,38 +1,10 @@
 """Catálogo de Productos. Relación de N:M de productos con sus ingredientes y relación con Usuarios (Proveedores)."""
 
 from typing import Optional, List
-from decimal import Decimal
 from datetime import datetime, timezone
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Index
 from pydantic import model_validator
 import re
-
-
-# TABLA INTERMEDIA (MUCHOS A MUCHOS)
-class ProductIngredientLink(SQLModel, table=True):
-    """Tabla pivote para unir Productos con sus Ingredientes/Atributos."""
-
-    __tablename__ = "product_ingredient_link"
-
-    product_id: int = Field(foreign_key="products.id", primary_key=True)
-    ingredient_id: int = Field(foreign_key="ingredients.id", primary_key=True)
-
-
-# CATÁLOGO DE ATRIBUTOS / INGREDIENTES
-class IngredientBase(SQLModel):
-    name: str = Field(unique=True, index=True, max_length=100)
-
-
-class Ingredient(IngredientBase, table=True):
-    """Tabla maestra de características."""
-
-    __tablename__ = "ingredients"
-
-    id: Optional[int] = Field(default=None, primary_key=True)
-
-    products: List["Products"] = Relationship(
-        back_populates="ingredients", link_model=ProductIngredientLink
-    )
 
 
 # PRODUCTOS
@@ -46,16 +18,10 @@ class Coupons(SQLModel, table=True):
 class __ProductBase(SQLModel):
     name: str = Field(index=True, max_length=255)
     description: Optional[str] = Field(default=None)
-    price: Decimal = Field(default=0, max_digits=10, decimal_places=2, ge=0)
-
-    # EL CAMBIO CLAVE: Ahora el proveedor es un Usuario de tu tabla 'users'
-    provider_id: int = Field(
-        foreign_key="users.id",
-        index=True,
-        description="ID del usuario que vende este producto",
-    )
-
-    coupon_id: Optional[int] = Field(default=None, foreign_key="coupons.id")
+    price: float = Field(default=0, max_digits=10, decimal_places=2, ge=0)
+    # category funcionara como un strings de etiquetas
+    category: str = Field(index=True)
+    coupon_id: Optional[int] = Field(default=None)
 
     @model_validator(mode="before")
     @classmethod
@@ -81,9 +47,20 @@ class Products(__ProductBase, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-    ingredients: List[Ingredient] = Relationship(
-        back_populates="products", link_model=ProductIngredientLink
+    user_id: int = Field(
+        foreign_key="users.id",
+        index=True,
+        description="ID del usuario que vende este producto",
+    )
+    search_tokens: str = Field(default="")
+    __table_args__ = (
+        Index(
+            "ix_product_search_tokens_gin",
+            "search_tokens",
+            postgresql_using="gin",
+            postgresql_ops={"search_tokens": "gin_trgm_ops"},
+            postgresql_with={"fastupdate": "on"},
+        ),
     )
 
 
@@ -92,16 +69,41 @@ class ProductGet(__ProductBase):
     """Respuesta de la API."""
 
     id: int
+    user_id: int
     created_at: datetime
     ingredients: List[IngredientBase]
 
 
-class ProductPost(SQLModel):
+class ProductPost(__ProductBase):
     """Payload de creación por parte del cliente."""
 
-    name: str = Field(max_length=255)
-    description: Optional[str] = Field(default=None)
-    price: Decimal = Field(default=0, max_digits=10, decimal_places=2, ge=0)
-    coupon_id: Optional[int] = Field(default=None)
+    pass
 
-    ingredient_ids: List[int] = Field(default=[])
+
+class ProductPacth(SQLModel):
+    name: Optional[str] = Field(default=None, index=True, max_length=255)
+    description: Optional[str] = Field(max_length=500)
+    price: Optional[float] = Field(default=None, decimal_places=2, ge=0, max_digits=10)
+    category: Optional[str] = None
+
+
+class ProductFilters(__ProductBase):
+    """Filtros de Productos"""
+
+    search: Optional[str] = Field(default=None, ge=5, le=255)
+    name: Optional[str] = Field(default=None, ge=5, le=255)
+    min_price: Optional[float] = Field(default=None, ge=0)
+    max_price: Optional[float] = Field(default=None)
+    user_id: Optional[int] = None
+    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=20, le=50)
+
+    @property
+    def reverse_range_price(self):
+        """Invierte los precios si price_min >  price_max"""
+
+        if self.min_price and self.max_price:
+            if self.min_price > self.max_price:
+                self.min_price, self.max_price = self.max_price, self.min_price
+
+        return self

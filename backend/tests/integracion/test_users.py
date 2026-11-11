@@ -64,11 +64,14 @@ lista_usuarios = [
 
 def test_create_user(client):
     """Crear Usuarios normales no deberi fallar"""
-    email: str = "email@gmail.com"
-    username: str = "nombre"
+    user = {
+        "email": "example@gmail.com",
+        "username": "ester",
+        "password": "sdjsfdfh122ddff"
+    }
     response = client.post(
         "/users",
-        json={"email": email, "username": username, "password": "Passw0rd1!88866."},
+        json=user
     )
 
     assert response.status_code == 201
